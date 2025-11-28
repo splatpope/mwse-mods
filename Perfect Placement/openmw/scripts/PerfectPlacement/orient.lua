@@ -5,6 +5,7 @@
     Used with permission.
 ]]--
 
+local camera = require('openmw.camera')
 local util = require('openmw.util')
 local ui = require('openmw.ui')
 
@@ -77,6 +78,19 @@ function this.orientRef(ref, orientation, tall, hitNormal)
     newOrientation.y = util.clamp(newOrientation.y, -maxSteepness, maxSteepness)
     newOrientation.z = orientation.z
     return newOrientation
+end
+
+function this.getCameraAxes()
+    local T = util.transform
+    local camRight = T.rotateZ(camera.getYaw() + math.pi/2) * util.vector3(1, 0, 0)
+    local camForward = T.rotateZ(camera.getYaw()) * util.vector3(0, 1, 0)
+    local camUp = T.rotateX(camera.getPitch()) * util.vector3(0, 0, 1)
+
+    return {
+        right = camRight:normalize(),
+        forward = camForward:normalize(),
+        up = camUp:normalize()
+    }
 end
 
 return this
