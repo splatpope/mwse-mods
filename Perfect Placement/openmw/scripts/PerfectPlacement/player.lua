@@ -489,11 +489,16 @@ local function onFrame(deltaTime)
     local orient = mutableVec3(this.orientation)
     if (this.snapMode) then
         local quantizer = config.options.snapQuantizer
+        --[[
         if (this.verticalMode == 0 or this.wallMount) then
             orient.z = quantizer * math.floor(0.5 + orient.z / quantizer)
         else
             orient.y = quantizer * math.floor(0.5 + orient.y / quantizer)
         end
+        ]]
+        orient.x = quantizer * math.floor(0.5 + orient.x / quantizer)
+        orient.y = quantizer * math.floor(0.5 + orient.y / quantizer)
+        orient.z = quantizer * math.floor(0.5 + orient.z / quantizer)
     end
 
     -- Update item.
