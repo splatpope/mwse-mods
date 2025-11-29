@@ -82,7 +82,7 @@ end
 
 function this.getCameraAxes()
     local T = util.transform
-    local camRight = T.rotateZ(camera.getYaw() + math.pi/2) * util.vector3(1, 0, 0)
+    local camRight = T.rotateZ(camera.getYaw() + math.pi/2) * util.vector3(0, 1, 0)
     local camForward = T.rotateZ(camera.getYaw()) * util.vector3(0, 1, 0)
     local camUp = T.rotateX(camera.getPitch()) * util.vector3(0, 0, 1)
 
