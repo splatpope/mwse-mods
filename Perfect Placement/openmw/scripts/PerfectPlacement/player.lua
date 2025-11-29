@@ -443,30 +443,49 @@ local function onFrame(deltaTime)
 
     -- Incrementally rotate the same amount as the player, to keep relative alignment with player.
 	local playerCurrentOri = transformToAngles(player.rotation)
-    local d_theta = playerCurrentOri.z - this.playerLastOri.z
+    local d_theta_player = playerCurrentOri.z - this.playerLastOri.z
     this.playerLastOri = playerCurrentOri
 
+    -- Moved this section up so that player relative alignment is preserved
+        -- Apply rotation.
+    if (this.verticalMode == 0) then
+        -- Ground plane rotation.
+        this.orientation.z = util.normalizeAngle(this.orientation.z + d_theta_player)
+    elseif (this.wallMount and this.rotateMode) then
+        -- Wall mount rotation.
+        this.orientation.z = util.normalizeAngle(this.orientation.z + d_theta_player)
+    else
+        -- Vertical rotation.
+        this.orientation.y = util.normalizeAngle(this.orientation.y + d_theta_player)
+    end
+
+    -- Apply manual rotations to this.orientation
     if (this.rotateMode) then
 		-- View rotation freeze. Use custom input handling.
 		cancelPlayerTurning()
 		local controllerMoveX = 2 * input.getAxisValue(input.CONTROLLER_AXIS.LookLeftRight)
+        local controllerMoveY = 2 * input.getAxisValue(input.CONTROLLER_AXIS.LookUpDown)
 		local horizontalMove = controllerMoveX ~= 0 and controllerMoveX or input.getMouseMoveX()
-        d_theta = 0.001 * config.options.sensitivity * horizontalMove
-    end
+        local verticalMove = controllerMoveY ~= 0 and controllerMoveY or input.getMouseMoveY()
+        local d_theta_z = 0.001 * config.options.sensitivity * horizontalMove
+        local d_theta_x = 0.001 * config.options.sensitivity * verticalMove
 
-    -- Apply rotation.
-    if (this.verticalMode == 0) then
-        -- Ground plane rotation.
-        this.orientation.z = util.normalizeAngle(this.orientation.z + d_theta)
-    elseif (this.wallMount and this.rotateMode) then
-        -- Wall mount rotation.
-        this.orientation.z = util.normalizeAngle(this.orientation.z + d_theta)
-    else
-        -- Vertical rotation.
-        this.orientation.y = util.normalizeAngle(this.orientation.y + d_theta)
+        -- Generate a rotation transform from the camera axes and the player inputs
+        local camAxes = orientModule.getCameraAxes()
+        local orbitTransform = util.transform.rotate(d_theta_z, camAxes.up) * util.transform.rotate(d_theta_x, camAxes.right)
+        -- Get the object's rotation transform and apply the camera orbit
+        local objRotationTransform = transformFromAngles(this.orientation)
+        local objOrbitedTransform = orbitTransform * objRotationTransform
+        -- Extract the new Euler angles from the resulting transform
+        local orbitedOrientation = transformToAngles(objOrbitedTransform)
+        this.orientation.x = orbitedOrientation.x
+        this.orientation.y = orbitedOrientation.y
+        this.orientation.z = orbitedOrientation.z
+
     end
 
     -- Rotation snap.
+    -- TODO : adapt to new manual rotation system
     local orient = mutableVec3(this.orientation)
     if (this.snapMode) then
         local quantizer = config.options.snapQuantizer
